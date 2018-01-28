@@ -1,0 +1,23 @@
+{% for item in latest_items %}
+<a href="{{url_for('showItem', categoryname = item.category.name, itemname = item.name) }}">
+    <li>
+        <div class="col m12 l4">
+            <div class="card">
+                <div class="card-image">
+                    {% if item.picture %}
+                        <img class="cover" src="{{url_for('uploadedFile', filename = item.picture) }}" alt="{{item.name}}">
+                    {% else %}
+                        <img class="cover" src="{{url_for('uploadedFile', filename = 'default.png') }}" alt="{{item.name}}">
+                    {% endif %}
+                </div>
+                <div class="card-content">
+                    <span class="card-title">{{item.name}}</span>
+                </div>
+                <a href=#>
+                    <span class="card-link"></span>
+                </a>
+            </div>
+        </div>
+    </li>
+</a>
+{% endfor %}

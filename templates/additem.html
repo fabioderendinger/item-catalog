@@ -1,0 +1,27 @@
+<div class="modal-content">
+    <h4 class="form-title">Create A New Item</h4>
+    <form action="#" method="post">
+        <div class="input-field">
+            {{ ciform.c_item_name(required="required") }}{{ ciform.c_item_name.label }}
+        </div>
+        <div class="input-field">
+            {{ ciform.c_item_description(class_="materialize-textarea") }}{{ ciform.c_item_description.label }}
+        </div>
+        <div class="input-field">
+            {{ ciform.c_item_category(required="required") }}{{ ciform.c_item_category.label }}
+        </div>
+        <div class="file-field input-field">
+            <div class="btn">
+                <span>File</span>
+                {{ ciform.c_item_image }}
+            </div>
+            <div class="file-path-wrapper">
+                <input class="file-path validate" type="text" placeholder="Upload a JPG or PNG file">
+            </div>
+        </div>
+        {{ ciform.c_item_csrf_token }}
+        <div class="modal-footer">
+            <input type="submit" class="modal-action waves-effect waves-red btn-flat" value="CREATE">
+        </div>
+    </form>
+</div>

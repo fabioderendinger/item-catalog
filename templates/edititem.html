@@ -1,0 +1,57 @@
+<div class="modal-content">
+    <h4 class="form-title">Edit {{item.name}}</h4>
+    <form action="#" method="post">
+        <div class="input-field">
+            {{ ciform.c_item_name(required="required") }}{{ ciform.c_item_name.label }}
+        </div>
+        <div class="input-field">
+            {{ ciform.c_item_description(class_="materialize-textarea") }}{{ ciform.c_item_description.label }}
+        </div>
+        <div class="input-field">
+            {{ ciform.c_item_category(required="required") }}{{ ciform.c_item_category.label }}
+        </div>
+        <div class="current-img">
+            {% if item.picture %}
+                <img class="image-prev" src="{{url_for('uploadedFile', filename = item.picture) }}" alt="{{item.name}}">
+            {% else %}
+                <img class="image-prev" src="{{url_for('uploadedFile', filename = 'default.png') }}" alt="{{item.name}}">
+            {% endif %}
+        </div>
+        <div class="file-field input-field">
+            <div class="btn">
+                <span>Change Image</span>
+                {{ ciform.c_item_image }}
+            </div>
+            <div class="file-path-wrapper">
+                <input class="file-path validate" type="text" placeholder="Upload a JPG or PNG file">
+            </div>
+        </div>
+        {{ ciform.c_item_csrf_token }}
+        <div class="modal-footer">
+            <input type="submit" class="modal-action waves-effect waves-red btn-flat" value="SAVE">
+        </div>
+    </form>
+</div>
+
+<script>
+    {% if item.picture %}
+        url = "{{url_for('uploadedFile', filename = item.picture) }}"
+    {% else %}
+        url = "{{url_for('uploadedFile', filename = 'default.png') }}"
+    {% endif %}
+
+    function readURL(input) {
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function (e) {
+                    $('.image-prev').attr('src', e.target.result);
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+        $("#c_item_image").change(function () {
+            $('.image-prev').attr('src', url);
+            readURL(this);
+        });
+</script>
+    

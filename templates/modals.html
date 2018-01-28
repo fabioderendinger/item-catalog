@@ -1,0 +1,185 @@
+<div class="form-deligator">
+    <!-- Modal: Create new Category -->
+    <div id="modal-add-cat" class="modal">
+        <div class="modal-content">
+            <h4 class="form-title">Create A New Category</h4>
+            <form action="#" method="post">
+                <div class="input-field">
+                    {{ cform.c_cat_name(required="required") }}{{ cform.c_cat_name.label }}
+                </div>
+                <div class="input-field">
+                    {{ cform.c_cat_csrf_token }}{{ cform.c_cat_csrf_token.label }}
+                </div>
+                <div class="modal-footer">
+                    <input type="submit" class="modal-action waves-effect waves-red btn-flat" value="CREATE">
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- Modal: Edit Category -->
+    <div id="modal-edit-cat" class="modal">
+        <div class="modal-content">
+            <h4 class="form-title title-edit-cat">Edit Category</h4>
+            <form action="#" method="post">
+                <div class="input-field">
+                    {{ uform.u_cat_name(required="required", placeholder=Category) }}{{ uform.u_cat_name.label }}
+                </div>
+                {{ uform.u_cat_csrf_token }} 
+                {{ uform.u_cat_id}} 
+                {{ uform.u_active_cat_id }}
+                <div class="modal-footer">
+                    <input type="submit" class="modal-action waves-effect waves-red btn-flat" value="SAVE">
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- Modal: Delete Category -->
+    <div id="modal-del-cat" class="modal">
+        <div class="modal-content">
+            <h4 class="form-title title-del-cat">Delete Category</h4>
+            <form action="#" method="post">
+                <p class="text-del-cat">Do you really want to delete this Category?</p>
+                {{ dform.d_cat_csrf_token }}
+                {{ dform.d_cat_id}}
+                {{ dform.d_active_cat_id }}
+                <div class="modal-footer">
+                    <input type="submit" class="modal-action waves-effect waves-red btn-flat" value="YES">
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Create new Item -->
+    <div id="modal-add-item" class="modal">
+        {% include "additem.html" %}
+    </div>
+
+
+</div>
+
+
+
+
+<script>
+    $( document ).ready(function() {
+        console.log( "document loaded" );
+
+        var url = "";
+        var action = "";
+        var active = "{{selectedCat.id}}";
+        
+        $('.addcategory-btn').on("click", function() {
+            url = "{{ url_for('newCategory') }}";
+            action = "category";
+        });
+
+        $('.cat-deligator').on("click", '.edit-cat', function() { // Using Event Delegation to select dynamically created HTML
+            category = $(this).data("name");
+            $('.title-edit-cat').text("Edit " + category);
+
+            $('#u_cat_name').val($(this).data("name")); //populate Name field in the form with the Category Name
+            $('#u_cat_id').val($(this).data("id")); //populate hidden ID field in the form with the Category ID
+            $('#u_active_cat_id').val(active); //populate hidden ID field in the form with the Category ID of the Active Category Link
+            url = "{{ url_for('updateCategory') }}";
+            action = "category";
+        });
+
+        $('.cat-deligator').on("click", '.delete-cat', function() { // Using Event Delegation to select dynamically created HTML
+            category = $(this).data("name");
+            $('.title-del-cat').text("Delete " + category);
+            $('.text-del-cat').text("Do you really want to delete " + category + "?");
+            
+            $('#d_cat_id').val($(this).data("id")); //populate hidden ID field in the form with the Category ID
+            $('#d_active_cat_id').val(active); //populate hidden ID field in the form with the Category ID of the Active Category Link
+            url = "{{ url_for('deleteCategory') }}";
+            action = "category";
+        });
+
+        $('#add-item').on("click", function() { // Executed when clicking on "New Item" in view_category_latest_items.html 
+            url = "{{ url_for('newItem') }}";
+            action = "itemLatest";
+
+            $('option[value=""]').prop({"disabled": true,"selected": true});
+            $('select').material_select();
+        });
+
+        $('#add-item-2').on("click", function() { // Executed when clicking on "New Item" in view_category_items.html 
+            url = "{{ url_for('newItem') }}";
+            action = "itemCategory";
+
+            $('#c_item_category').prop("disabled", true);
+            var category = $(this).data("category-id");
+            var selector = "option[value="+category+"]";
+            $(selector).prop({"selected": true});
+            $('select').material_select();
+
+            // Only necessary due to Materialize Bug (it's not possible to make the select field readonly)
+            $('select').prop({"disabled": false});
+            $('input').prop({"disabled": false}); 
+        });
+
+
+
+        $('.form-deligator').on("submit", 'form', function (e) { // Using Event Delegation to select dynamically created Add Item form (form is rerendered after a CRUD operation on Category)
+            console.log(url); // send the form data here.
+            console.log($(this).serialize())
+            var index = $('form').index($(this))
+            var form = $('form')[index]; // We need to use standard javascript object here
+            var formData = new FormData(form);
+            for(var pair of formData.entries()) {
+                console.log(pair[0]+ ', '+ pair[1]); 
+            }
+
+            $.ajax({
+                type: "POST",
+                url: url,
+                data: formData,
+                contentType: false, // NEEDED, DON'T OMIT THIS (requires jQuery 1.6+)
+                processData: false, // NEEDED, DON'T OMIT THIS
+                success: function (json) {
+                    console.log(json)  // display the returned data in the console.
+                    if ('status' in json.data && json.data.status == 1) { // Successful request without redirect; Create/update/delete of Category/Item has been successful
+                        successFuntion(action, json, form);
+                    } else if ('status' in json.data && json.data.status == 0) {
+                        errorFunction(action,json,form);
+                    }
+                    if ('redirect' in json.data) {  // Succesful request with redirect
+                        window.location.replace(json.data.redirect);
+                    }
+                },
+                statusCode: {
+                    403: function () {
+                        alert('Forbidden.');
+                    },
+                }
+            });
+            e.preventDefault();
+        });
+
+
+        function successFuntion(actiontype, json, form){
+            switch(actiontype){
+                case "category":
+                    $('.categories').html(json.data.html[0]);
+                    $('#modal-add-item').html(json.data.html[1]);
+                    $('select').material_select();
+                    break;
+                case "itemLatest":
+                    $('.latest-items').html(json.data.html[0]);
+                    break;
+                case "itemCategory":
+                    $('.category-items').html(json.data.html[1]);
+                    break;
+            }
+            $('.modal').modal('close');
+            form.reset() // clear content of form after submission
+            Materialize.toast(json.data.message, 4000);
+        }
+
+        function errorFunction(actiontype, json, form){
+            Materialize.toast(json.data.message, 4000);
+        }
+
+    });
+</script>
+

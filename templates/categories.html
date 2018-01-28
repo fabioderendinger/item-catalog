@@ -1,0 +1,31 @@
+
+{% for category in categories %}
+	<li>{% if selectedCat %}
+		{% if category.name == selectedCat.name %}
+		<a href="{{url_for('showItems', categoryname = category.name) }}" class="category-link active">{{category.name}}</a>
+			{% if 'user_id' in session and session.user_id == category.user_id %}
+			<span class="cat-icon">
+				<a class="modal-trigger edit-cat" data-actiontype="edit" data-table="Category" data-id="{{category.id}}" data-name="{{category.name}}" href="#modal-edit-cat"><i class="tiny material-icons edit">edit</i></a>
+				<a class="modal-trigger delete-cat" data-actiontype="delete" data-table="Category" data-id="{{category.id}}" data-name="{{category.name}}" href="#modal-del-cat"><i class="tiny material-icons delete">delete</i></a>
+			</span>
+			{% endif %}
+		{% else %}
+		<a href="{{url_for('showItems', categoryname = category.name) }}" class="category-link">{{category.name}}</a>
+			{% if 'user_id' in session and session.user_id == category.user_id %}
+			<span class="cat-icon">
+				<a class="modal-trigger edit-cat" data-actiontype="edit" data-table="Category" data-id="{{category.id}}" data-name="{{category.name}}" href="#modal-edit-cat"><i class="tiny material-icons edit">edit</i></a>
+				<a class="modal-trigger delete-cat" data-actiontype="delete" data-table="Category" data-id="{{category.id}}" data-name="{{category.name}}" href="#modal-del-cat"><i class="tiny material-icons delete">delete</i></a>
+			</span>
+			{% endif %}
+		{% endif %}
+		{% else %}
+		<a href="{{url_for('showItems', categoryname = category.name) }}" class="category-link">{{category.name}}</a>
+			{% if 'user_id' in session and session.user_id == category.user_id %}
+			<span class="cat-icon">
+				<a class="modal-trigger edit-cat" data-actiontype="edit" data-table="Category" data-id="{{category.id}}" data-name="{{category.name}}" href="#modal-edit-cat"><i class="tiny material-icons edit">edit</i></a>
+				<a class="modal-trigger delete-cat" data-actiontype="delete" data-table="Category" data-id="{{category.id}}" data-name="{{category.name}}" href="#modal-del-cat"><i class="tiny material-icons delete">delete</i></a>
+			</span>
+			{% endif %}
+		{% endif %}
+	</li>
+{% endfor %}

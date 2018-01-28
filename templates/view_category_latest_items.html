@@ -1,0 +1,41 @@
+{% extends "main.html" %}
+{% block content %}
+<div class="row">
+    <div class="col l3">
+            <div class="sidebar">
+                    {%if 'username' in session %}
+                    <button class="addcategory-btn waves-effect waves-light btn red lighten-1 modal-trigger" data-target="modal-add-cat">Add Category</button>
+                    {%else%}
+                    <h4 class="categories-title">Categories</h4>
+                    {%endif%}
+                    <div>
+                        <ul class="categories cat-deligator">
+                            {% include "categories.html" %}
+                        </ul>
+                    </div>
+                
+                </div>
+    </div>
+    <div class="col l9">
+        <div class="wrapper">
+            <div class="title">
+                <h3>Latest Items</h3>  
+            </div>
+            {%if 'username' in session %}
+            <button id="add-item" class="btn fixed-width-btn waves-effect waves-light red lighten-1 modal-trigger" data-target="modal-add-item">New Item</button>
+            {%endif%}
+        </div>
+        <div>
+            <ul class="latest-items">
+                {% include "latestItems.html" %}
+            </ul>
+        </div>
+    </div>
+</div>
+{%if 'username' in session %}
+{% include "modals.html" %}
+{%endif%}
+
+
+
+{% endblock %}

@@ -1,0 +1,46 @@
+{% extends "main.html" %}
+{% block content %}
+<div class="row">
+    <div class="col l3">
+            <div class="sidebar">
+                    {%if 'username' in session %}
+                    <button class="addcategory-btn waves-effect waves-light red lighten-1 btn modal-trigger" data-target="modal-add-cat">Add Category</button>
+                    {%else%}
+                    <h4 class="categories-title">Categories</h4>
+                    {%endif%}
+                    <div>
+                        <ul class="categories cat-deligator">
+                            {% include "categories.html" %}
+                        </ul>
+                    </div>
+                
+                </div>
+    </div>
+    <div class="col l9">
+            <div class="wrapper">
+                <div class="title">
+                    <h3>{{selectedCat.name}}
+                        {% if 'user_id' in session and session.user_id == selectedCat.user_id %}
+                        <span class="cat-icon cat-deligator">
+                            <a class="modal-trigger edit-cat" data-id="{{selectedCat.id}}" data-name="{{selectedCat.name}}" href="#modal-edit-cat"><i class="small material-icons edit">edit</i></a>
+                            <a class="modal-trigger delete-cat" data-id="{{selectedCat.id}}" data-name="{{selectedCat.name}}" href="#modal-del-cat"><i class="small material-icons delete">delete</i></a>
+                        </span>
+                        {%endif%} 
+                    </h3>
+                </div>
+                {%if 'username' in session %}
+                <button id="add-item-2" class="btn fixed-width-btn waves-effect waves-light red lighten-1 modal-trigger" data-target="modal-add-item" data-category-id = "{{selectedCat.id}}">New Item</button>
+                {%endif%}
+            </div>
+            <div>
+                <ul class="category-items">
+                    {% include "items.html" %} 
+                </ul>
+            </div>
+        </div>
+</div>
+{%if 'username' in session %}
+{% include "modals.html" %}
+{%endif%}
+
+{% endblock %}

@@ -1,0 +1,160 @@
+body {
+    font-family: 'Raleway', sans-serif;
+}
+
+header {
+    margin-bottom: 150px;
+}
+
+footer {
+    margin-top: 100px; 
+}
+
+#topbarsearch {
+    margin-right: 30px;
+}
+
+#topbarsearch .input-field .prefix.active {
+    color: white;
+}
+
+#topbarsearch .input-field input[type=text]:focus {
+    border-bottom: 1px solid white;
+    box-shadow: 0 1px 0 0 white;
+}
+
+#topbarsearch .input-field input[type=text]{
+    border-bottom: 1px solid white;
+}
+
+#autocomplete-input {
+    width: 300px;
+}
+
+.item-suggestion {
+    font-weight: 600;
+}
+
+.autocomplete-content {
+    position: absolute;
+}
+
+.autocomplete-content li img {
+    margin: 0px;
+ }
+
+.dropdown-content li a{
+    display: flex;
+    flex-flow: row nowrap;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 14px;
+}
+
+.li-text {
+    color: black;
+    font-size: 12px;
+}
+
+.li-img {
+    height: 40px;
+    width: 40px;
+}
+
+.categories-title {
+    margin-top: 8px;
+    font-weight: 900;
+}
+
+.wrapper {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 45px;
+}
+
+.wrapper h3 {
+    margin-top: 0px;
+    font-weight: 900;
+}
+
+.title {
+    max-width: calc(100% - 140px);
+}
+
+.fixed-width-btn {
+    width: 130px;
+    padding: 0px;
+}
+
+.card .card-title {
+    color: black;
+    font-size: 17px;
+}
+
+.category-link {
+    color: black;
+}
+
+a.active {
+    font-weight: bold;
+}
+
+
+.cat-icon {
+    color: rgb(126, 126, 126);
+    padding: 10px;
+}
+
+
+.delete, .edit {
+    cursor: pointer;
+    color: rgb(83, 83, 83);
+}
+
+
+.item-img {
+    width: 100%;
+}
+
+
+.form-title {
+    margin-bottom: 50px;
+}
+
+.card-image {
+    display: flex;
+    align-items: center;
+    align-content: center;
+    height: 250px;
+    background: pink;
+    overflow: hidden;
+}
+
+.cover {
+    object-fit: cover;
+    width: 100%;
+    height: 100%;
+    transition: 0.5s all;
+}
+
+.cover:hover {
+    transform: scale(1.1);
+}
+
+.image-prev {
+    width: 200px;
+}
+
+#modal-login {
+    width: 500px;
+}
+
+
+#modal-login .modal-content{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 350px;
+}
+
+

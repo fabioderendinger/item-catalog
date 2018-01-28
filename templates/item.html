@@ -1,0 +1,109 @@
+{% extends "main.html" %}
+{% block content %}
+<div class="row">
+    <div class="col l5 m12">
+        {% if item.picture %}
+            <img class="item-img" src="{{url_for('uploadedFile', filename = item.picture) }}" alt="{{item.name}}">
+        {% else %}
+            <img class="item-img" src="{{url_for('uploadedFile', filename = 'default.png') }}" alt="{{item.name}}">
+        {% endif %}
+    </div>
+    <div class="col l7 m12">
+        <div class="wrapper">
+            <div class="title">
+                <h3>{{item.name}}
+                    {% if 'user_id' in session and session.user_id == item.user_id %}
+                    <span class="cat-icon">
+                            <a class="modal-trigger edit-item" href="#modal-edit-item"><i class="small material-icons edit">edit</i></a> 
+                            <a class="modal-trigger delete-item" href="#modal-delete-item"><i class="small material-icons delete">delete</i></a>
+                    </span>
+                    {%endif%}
+                </h3>
+            </div>
+        </div>
+        <p>{{item.description}}</p>
+    </div>
+</div>
+
+
+
+
+
+<div class="form-deligator">
+
+    <!-- Modal: Edit Category -->
+    <div id="modal-edit-item" class="modal">
+        {% include "edititem.html" %}
+    </div>
+    <!-- Modal: Delete Category -->
+    <div id="modal-delete-item" class="modal">
+        <div class="modal-content">
+            <h4 class="form-title title-del-cat">Delete {{item.name}}</h4>
+            <form action="#" method="post">
+                <p class="text-del-cat">Do you really want to delete {{item.name}}?</p>
+                {{ diform.d_item_csrf_token }}
+                <div class="modal-footer">
+                    <input type="submit" class="modal-action waves-effect waves-red btn-flat" value="YES">
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+    
+    
+{% if 'user_id' in session and session.user_id == item.user_id %}    
+    
+<script>
+    $( document ).ready(function() {
+        console.log( "document loaded" );
+
+        var url = "";
+        
+
+        $('.edit-item').on("click", function() { // Using Event Delegation to select dynamically created HTML
+            url = "{{ url_for('editItem', item_id=item.id) }}";
+        });
+
+        $('.delete-item').on("click", function() { // Using Event Delegation to select dynamically created HTML
+            url = "{{ url_for('deleteItem', item_id=item.id) }}";
+        });
+
+
+        $('.form-deligator').on("submit", 'form', function (e) { // Using Event Delegation to select dynamically created Add Item form (form is rerendered after a CRUD operation on Category)
+
+            var index = $('form').index($(this))
+            var form = $('form')[index]; // We need to use standard javascript object here
+            var formData = new FormData(form);
+            for(var pair of formData.entries()) {
+                console.log(pair[0]+ ', '+ pair[1]); 
+            }
+
+            $.ajax({
+                type: "POST",
+                url: url,
+                data: formData,
+                contentType: false, // NEEDED, DON'T OMIT THIS (requires jQuery 1.6+)
+                processData: false, // NEEDED, DON'T OMIT THIS
+                success: function (json) {
+                    console.log(json)  // display the returned data in the console.
+                    if ('redirect' in json.data) {  // Succesful request with redirect
+                        window.location.replace(json.data.redirect);
+                    }
+                },
+                statusCode: {
+                    403: function () {
+                        alert('Forbidden.');
+                    },
+                }
+            });
+            e.preventDefault();
+        });
+    });
+</script>
+
+
+{% endif %}
+    
+
+{% endblock %}

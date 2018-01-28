@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<link href='http://fonts.googleapis.com/css?family=Roboto:400,300,700' rel='stylesheet' type='text/css'>
+	<link href="https://fonts.googleapis.com/css?family=Raleway:400,600,900" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+	<!-- <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css"> -->
+	<!-- <link rel=stylesheet type=text/css href="{{ url_for('static', filename='styles.css') }}"> -->
+
+	<link type="text/css" rel="stylesheet" href="{{ url_for('static', filename='css/lib/materialize.min.css') }}" media="screen,projection"
+	/>
+
+	<link rel="stylesheet" media="(min-width: 991px)" href="{{ url_for('static', filename='css/styles.css') }}" media="screen,projection"
+	/>
+	<link rel="stylesheet" media="(max-width: 990px)" href="{{ url_for('static', filename='css/mobile.css') }}" />
+
+	<script type="text/javascript" src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+	<script type="text/javascript" src="{{ url_for('static', filename='js/lib/materialize.min.js') }}"></script>
+	<script type="text/javascript" src="{{ url_for('static', filename='js/functions.js') }}"></script>
+
+</head>
+
+
+
+<body>
+	<header>
+		<nav>
+			<div class="nav-wrapper container">
+				<a href="#" data-activates="mobile-demo" class="button-collapse">
+					<i class="material-icons">menu</i>
+				</a>
+				<ul id="nav-mobile" class="right hide-on-med-and-down">
+					<li>
+						<a href="{{ url_for('showCategories') }}">Home</a>
+					</li>
+					<li>
+						{%if 'username' not in session %}
+						<button class="btn red darken-1 modal-trigger login-btn" data-target="modal-login">Login</button>
+						{% else %}
+						<a class="btn red darken-1" href="{{url_for('disconnect')}}">Logout </a>
+						{% endif %}
+					</li>
+				</ul>
+				<ul id="nav-mobile" class="left hide-on-med-and-down">
+					<li>
+						<div id="topbarsearch">
+							<form class="input-field search-form col s6 s12" action="#" method="post">
+								<i class="material-icons prefix">search</i>
+								<input type="text" placeholder="Search" id="autocomplete-input" class="autocomplete" name="autocomplete-input">
+								<ul class="autocomplete-content dropdown-content">
+								</ul>
+							</form>
+						</div>
+					</li>
+				</ul>
+				<ul class="side-nav" id="mobile-demo">
+					<li>
+						<div id="sidebarsearch" class="card">
+							<form class="input-field search-form" action="#" method="post">
+								<input type="text" placeholder="Search" id="autocomplete-input-mobile" class="autocomplete" name="autocomplete-input">
+								<ul class="autocomplete-content dropdown-content">
+								</ul>
+							</form>
+						</div>
+					</li>
+					<li>
+						<a id="home" class="center" href="{{ url_for('showCategories') }}">Home</a>
+					</li>
+					<li>
+						<p class="center">
+							{%if 'username' not in session %}
+							<button class="btn center red darken-1 modal-trigger login-btn" data-target="modal-login">Login</button>
+							{% else %}
+							<a class="btn center red darken-1" href="{{url_for('disconnect')}}">Logout </a>
+							{% endif %}
+						</p>
+					</li>
+				</ul>
+			</div>
+		</nav>
+	</header>
+
+	<!-- Flash messages -->
+	{% with messages = get_flashed_messages() %}
+	{% if messages %}
+		<script>
+			function showFlash(){
+				{% for message in messages %}
+				html = "{{ message | safe}}";
+				Materialize.toast(html, 4000);
+				{% endfor %}
+			}
+			window.onload = showFlash;
+		</script>
+	
+	{% endif %}
+	{% endwith %}
+
+	<div class="container">
+		{% block content %} {% endblock %}
+	</div>
+
+	<footer class="page-footer">
+		<div class="container">
+			<div class="row">
+				<div class="col l6 s12">
+					<h5 class="white-text">About this Project</h5>
+					<p class="grey-text text-lighten-4">This project is part of the Udacity Full Stack Nanoegories. The Item Catalog project consists of developing an application that provides a list of items within a variety of categories, as well as a user registration and authentication system. This project uses persistent data storage to create a RESTful web application that allows users to perform Create, Read, Update, and Delete operations.</p>
+					<p class="grey-text text-lighten-4">A user does not need to be logged in to view the categories or items. However, users who created an item are the only users allowed to update or delete the item that they created.</p>
+					<p class="grey-text text-lighten-4">This program uses third-party auth with Google or Facebook. Some of the technologies used to build this application include Flask, jQuery, MaterializeCSS, Jinja2, and SQLite.</p>
+				</div>
+			</div>
+		</div>
+		<div class="footer-copyright">
+			<div class="container">
+				© 2018 <a href="https://fabioderendinger.github.io/">Fabio Derendinger</a>
+			</div>
+		</div>
+	</footer>
+
+	<!-- Modal: Login -->
+    <div id="modal-login" class="modal">
+		<div class="modal-content">
+			<!-- GOOGLE PLUS SIGN IN-->
+			<iframe width="100%" height="100%" frameborder="0">
+			</iframe>
+
+		</div>
+	</div>
+
+</body>
+
+<script>
+
+	$(document).ready(function () {
+		console.log("document loaded");
+
+		// Load iframe just once the login button is clicked to avoid that a new CSRF token is created server-side when /login is called"
+		$('.login-btn').click(function() {
+			$('iframe').prop({"src":"/login"})
+		});
+
+		// START SEARCH BOX
+		var path = "{{url_for('itemsJSON')}}"
+		$('.autocomplete').keyup(function () {
+			$('.autocomplete-content').show()
+			var url = path + "?" + $(this).serialize()
+			$.getJSON(url, function (json) {
+				html = "";
+				for (var i = 0; i < json.items.length; i++) {
+					var item = json.items[i].name;
+					var itemEncoded = encodeURI(item);
+					var category = json.items[i]['category-name'];
+					var picture = json.items[i].picture;
+					var itemURL = "/categories/" + category + "/" + itemEncoded
+					html = html + "<li><a href=" + itemURL + "><div class='li-text'><span class='item-suggestion'>" + item + "</span><br>" + category + "</div><div class='li-img'><img class='cover' src='/images/" + picture + "' alt=''></div></a></li>";
+				}
+				$('.autocomplete-content').html(html)
+			});
+		});
+
+		$(".autocomplete").blur(function () {
+			setTimeout(function () {
+                $('.autocomplete-content').hide()
+              }, 400);
+		});
+		// END SEARCH BOX	
+	});
+</script>
+
+</html>
