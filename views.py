@@ -16,7 +16,6 @@ import requests
 from werkzeug.utils import secure_filename
 from flask import send_from_directory
 
-from flask_wtf import FlaskForm
 from wtforms import Form, StringField, HiddenField, TextAreaField, SelectField, FileField, validators
 from wtforms.validators import DataRequired, Regexp
 
@@ -33,8 +32,6 @@ Base.metadata.bind = engine
 
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
-
-
 
 
 
@@ -129,7 +126,7 @@ def itemsOfCategory(categoryID):
 
 # JSON Endpoints
 
-@app.route('/categories.json/')
+@app.route('/catalog.json/')
 def fullJSON():
     categories = session.query(Category).order_by(asc(Category.name)).all()
     return jsonify(categories=[c.serialize for c in categories])
