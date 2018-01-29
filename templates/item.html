@@ -27,7 +27,7 @@
 
 
 
-
+{% if 'user_id' in session and session.user_id == item.user_id %} 
 
 <div class="form-deligator">
 
@@ -51,8 +51,6 @@
 
 </div>
     
-    
-{% if 'user_id' in session and session.user_id == item.user_id %}    
     
 <script>
     $( document ).ready(function() {

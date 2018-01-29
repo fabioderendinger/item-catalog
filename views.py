@@ -93,27 +93,28 @@ def unique_filename():
 
 def initializeForms(categories):
     cform = CreateCategoryForm()
-    cform.c_cat_csrf_token.data = login_session['state']
     dform = DeleteCategoryForm()
-    dform.d_cat_csrf_token.data = login_session['state']
     uform = UpdateCategoryForm()
-    uform.u_cat_csrf_token.data = login_session['state']
     ciform = ItemForm()
-    ciform.c_item_csrf_token.data = login_session['state']
     ciform.c_item_category.choices = [("", "---")]
     for category in categories:
         ciform.c_item_category.choices.append((category.id, category.name))
+    if 'state' in login_session:
+        cform.c_cat_csrf_token.data = login_session['state']
+        dform.d_cat_csrf_token.data = login_session['state']
+        uform.u_cat_csrf_token.data = login_session['state']
+        ciform.c_item_csrf_token.data = login_session['state']
     return cform, dform, uform, ciform
 
 def initializeItemForm(categories):
-    ciform = ItemForm()
-    ciform.c_item_csrf_token.data = login_session['state']
+    ciform = ItemForm() 
     ciform.c_item_category.choices = [("", "---")]
     for category in categories:
         ciform.c_item_category.choices.append((category.id, category.name))
-    
     diform = DeleteItemForm()
-    diform.d_item_csrf_token.data = login_session['state']
+    if 'state' in login_session:
+        ciform.c_item_csrf_token.data = login_session['state']
+        diform.d_item_csrf_token.data = login_session['state']
     return ciform, diform
 
 def latestItems():
@@ -163,13 +164,14 @@ def showItem(categoryname, itemname):
     item = session.query(Item).join(Category).filter(Category.name == categoryname, Item.name == itemname).first() # join() used to address the case when two different categories contain an item with the same name
     categories = session.query(Category).order_by(asc(Category.name)).all()
 
-    # Populate the fields of the edititem.html form with the respective values of the selected item
     ciform, diform = initializeItemForm(categories)
-    ciform.c_item_category.default = item.category_id
-    ciform.process()
-    ciform.c_item_csrf_token.data = login_session['state']
-    ciform.c_item_name.data = item.name
-    ciform.c_item_description.data = item.description
+    # Populate the fields of the edititem.html form with the respective values of the selected item
+    if 'username' in login_session:
+        ciform.c_item_category.default = item.category_id
+        ciform.process()
+        ciform.c_item_csrf_token.data = login_session['state']
+        ciform.c_item_name.data = item.name
+        ciform.c_item_description.data = item.description
     
     return render_template('item.html', item=item, ciform=ciform, diform=diform)
 
