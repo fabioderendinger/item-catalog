@@ -23,6 +23,7 @@ from flask import send_from_directory
 from wtforms import (Form, StringField, HiddenField,
                      TextAreaField, SelectField, FileField, validators)
 from wtforms.validators import DataRequired, Regexp
+from functools import wraps
 
 app = Flask(__name__)
 
@@ -139,6 +140,15 @@ def latestItems():
 def itemsOfCategory(categoryID):
     return session.query(Item).filter_by(category_id=categoryID).all()
 
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'username' in login_session:
+            return f(*args, **kwargs)
+        else:
+            flash('You are not allowed to access there')
+            return redirect('/login')
+    return decorated_function
 
 # JSON Endpoints
 
@@ -224,11 +234,10 @@ def showItem(categoryname, itemname):
 
 
 @app.route('/categories/new/', methods=['POST'])
+@login_required
 def newCategory():
     # User needs to be logged in for CRUD operations.
     # Redirect User to Login screen if he is not logged in
-    if 'username' not in login_session:
-        return redirect('/login')
 
     form = CreateCategoryForm(request.form)
 
@@ -260,10 +269,8 @@ def newCategory():
 
 
 @app.route('/categories/delete/', methods=['POST'])
+@login_required
 def deleteCategory():
-    if 'username' not in login_session:
-        return redirect('/login')
-
     dform = DeleteCategoryForm(request.form)
     if dform.validate():
         if dform.d_cat_csrf_token.data != login_session['state']:
@@ -307,10 +314,8 @@ def deleteCategory():
 
 
 @app.route('/categories/update/', methods=['POST'])
+@login_required
 def updateCategory():
-    if 'username' not in login_session:
-        return redirect('/login')
-
     uform = UpdateCategoryForm(request.form)
     if uform.validate():
         if uform.u_cat_csrf_token.data != login_session['state']:
@@ -360,10 +365,8 @@ def updateCategory():
 
 
 @app.route('/item/new/', methods=['POST'])
+@login_required
 def newItem():
-    if 'username' not in login_session:
-        return redirect('/login')
-
     form = ItemForm(request.form)
     # As "Choices" have not been set in the form class (for dynamic Choices),
     # we must add the Choices here so the form.validate() function below can
@@ -421,10 +424,8 @@ def newItem():
 
 
 @app.route('/<int:item_id>/edit/', methods=['POST'])
+@login_required
 def editItem(item_id):
-    if 'username' not in login_session:
-        return redirect('/login')
-
     form = ItemForm(request.form)
     # As "Choices" have not been set in the form class (for dynamic Choices),
     # we must add the Choices here so the form.validate() function below can
@@ -483,10 +484,8 @@ def editItem(item_id):
 
 
 @app.route('/<int:item_id>/delete/', methods=['POST'])
+@login_required
 def deleteItem(item_id):
-    if 'username' not in login_session:
-        return redirect('/login')
-
     form = DeleteItemForm(request.form)
 
     if form.validate():
