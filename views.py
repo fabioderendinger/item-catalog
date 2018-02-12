@@ -1,6 +1,10 @@
 import os
-import tempfile # to generate unique filenames for the uploaded and stored images
-from flask import Flask, render_template, request, redirect, jsonify, url_for, flash, g, abort, escape
+
+# to generate unique filenames for the uploaded and stored images
+import tempfile
+
+from flask import (Flask, render_template, request, redirect,
+                   jsonify, url_for, flash, g, abort, escape)
 from sqlalchemy import create_engine, asc, desc, func
 from sqlalchemy.orm import sessionmaker
 from database_setup import Base, Category, Item, User
@@ -16,7 +20,8 @@ import requests
 from werkzeug.utils import secure_filename
 from flask import send_from_directory
 
-from wtforms import Form, StringField, HiddenField, TextAreaField, SelectField, FileField, validators
+from wtforms import (Form, StringField, HiddenField,
+                     TextAreaField, SelectField, FileField, validators)
 from wtforms.validators import DataRequired, Regexp
 
 app = Flask(__name__)
@@ -34,8 +39,6 @@ DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
 
-
-
 # Create anti-forgery state token (CSRF Token)
 @app.route('/login')
 def showLogin():
@@ -47,49 +50,59 @@ def showLogin():
 
 # Definition of Forms
 class CreateCategoryForm(Form):
-    c_cat_name = StringField('Category', validators= [DataRequired()])
-    c_cat_csrf_token = HiddenField('csrf_token', validators= [DataRequired()])
+    c_cat_name = StringField('Category', validators=[DataRequired()])
+    c_cat_csrf_token = HiddenField('csrf_token', validators=[DataRequired()])
+
 
 class DeleteCategoryForm(Form):
-    d_cat_id = HiddenField('Category ID', validators= [DataRequired()])
+    d_cat_id = HiddenField('Category ID', validators=[DataRequired()])
     d_active_cat_id = HiddenField('Active Category ID')
-    d_cat_csrf_token = HiddenField('csrf_token', validators= [DataRequired()])
+    d_cat_csrf_token = HiddenField('csrf_token', validators=[DataRequired()])
+
 
 class UpdateCategoryForm(Form):
-    u_cat_name = StringField('Category', validators= [DataRequired()])
-    u_cat_id = HiddenField('Category ID', validators= [DataRequired()])
+    u_cat_name = StringField('Category', validators=[DataRequired()])
+    u_cat_id = HiddenField('Category ID', validators=[DataRequired()])
     u_active_cat_id = HiddenField('Active Category ID')
-    u_cat_csrf_token = HiddenField('csrf_token', validators= [DataRequired()])
+    u_cat_csrf_token = HiddenField('csrf_token', validators=[DataRequired()])
+
 
 class ItemForm(Form):
-    c_item_name = StringField('Item', validators= [DataRequired()])
+    c_item_name = StringField('Item', validators=[DataRequired()])
     c_item_description = TextAreaField('Description')
-    c_item_category = SelectField('Category', validators= [DataRequired()])
-    c_item_image =FileField('Image File')
-    c_item_csrf_token = HiddenField('csrf_token', validators= [DataRequired()])
+    c_item_category = SelectField('Category', validators=[DataRequired()])
+    c_item_image = FileField('Image File')
+    c_item_csrf_token = HiddenField('csrf_token', validators=[DataRequired()])
+
 
 class DeleteItemForm(Form):
-    d_item_csrf_token = HiddenField('csrf_token', validators= [DataRequired()])
+    d_item_csrf_token = HiddenField('csrf_token', validators=[DataRequired()])
 
 
+# Definition of helper functions
 
-# Definition of helper functions 
 
 UPLOAD_FOLDER = 'static/img/'
 ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg'])
+
 
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+
 def unique_filename():
-    # We use mkstemp to create unique temporary files; as we are only interested in the filename the files are remove after creation
-    # Note: Alternatively, https://docs.python.org/3.5/library/uuid.html could be used
+    # We use mkstemp to create unique temporary files; as we are only
+    # interested in the filename the files are remove after creation
+    # Note: Alternatively, https://docs.python.org/3.5/library/uuid.html
+    # could be used
     basename = "img_"
-    fd, filepath = tempfile.mkstemp(prefix=basename, dir=app.config['UPLOAD_FOLDER'])
+    fd, filepath = tempfile.mkstemp(
+        prefix=basename, dir=app.config['UPLOAD_FOLDER'])
     os.close(fd)
     os.remove(filepath)
     return os.path.basename(filepath)
+
 
 def initializeForms(categories):
     cform = CreateCategoryForm()
@@ -106,8 +119,9 @@ def initializeForms(categories):
         ciform.c_item_csrf_token.data = login_session['state']
     return cform, dform, uform, ciform
 
+
 def initializeItemForm(categories):
-    ciform = ItemForm() 
+    ciform = ItemForm()
     ciform.c_item_category.choices = [("", "---")]
     for category in categories:
         ciform.c_item_category.choices.append((category.id, category.name))
@@ -117,12 +131,13 @@ def initializeItemForm(categories):
         diform.d_item_csrf_token.data = login_session['state']
     return ciform, diform
 
+
 def latestItems():
     return session.query(Item).order_by(desc(Item.id)).limit(6).all()
 
-def itemsOfCategory(categoryID):
-    return session.query(Item).filter_by(category_id = categoryID).all()
 
+def itemsOfCategory(categoryID):
+    return session.query(Item).filter_by(category_id=categoryID).all()
 
 
 # JSON Endpoints
@@ -132,11 +147,21 @@ def fullJSON():
     categories = session.query(Category).order_by(asc(Category.name)).all()
     return jsonify(categories=[c.serialize for c in categories])
 
+
 @app.route('/items.json/')
 def itemsJSON():
     searchterm = request.args.get('autocomplete-input', '')
-    items = session.query(Item).filter(Item.name.ilike('%{}%'.format(searchterm))).all()
+    items = session.query(Item).filter(
+        Item.name.ilike('%{}%'.format(searchterm))).all()
     return jsonify(items=[i.serialize for i in items])
+
+
+@app.route('/<string:categoryname>/<string:itemname>.json')
+def itemJSON(categoryname, itemname):
+    searchterm = request.args.get('autocomplete-input', '')
+    item = session.query(Item).join(Category).filter(
+        Category.name == categoryname, Item.name == itemname).all()
+    return jsonify(item=[i.serialize for i in item])
 
 
 # Show all categories
@@ -146,59 +171,93 @@ def showCategories():
     categories = session.query(Category).order_by(asc(Category.name)).all()
     latest_items = latestItems()
     cform, dform, uform, ciform = initializeForms(categories)
-    
-    return render_template('view_category_latest_items.html', categories=categories, selectedCat=None, latest_items=latest_items, cform=cform, dform=dform, uform=uform, ciform=ciform)
+
+    return render_template('view_category_latest_items.html',
+                           categories=categories,
+                           selectedCat=None,
+                           latest_items=latest_items,
+                           cform=cform,
+                           dform=dform,
+                           uform=uform,
+                           ciform=ciform)
 
 
 @app.route('/categories/<string:categoryname>/')
 def showItems(categoryname):
     categories = session.query(Category).order_by(asc(Category.name)).all()
-    category = session.query(Category).filter(func.upper(Category.name) == func.upper(categoryname)).first() # func.upper() used to make the URL case insensitive
+    # func.upper() used to make the URL case insensitive
+    category = session.query(Category).filter(
+        func.upper(Category.name) == func.upper(
+            categoryname)).first()
     items = itemsOfCategory(category.id)
     cform, dform, uform, ciform = initializeForms(categories)
-    return render_template('view_category_items.html', categories=categories, selectedCat=category, items=items, cform=cform, dform=dform, uform=uform, ciform=ciform)
+    return render_template('view_category_items.html',
+                           categories=categories,
+                           selectedCat=category,
+                           items=items,
+                           cform=cform,
+                           dform=dform,
+                           uform=uform,
+                           ciform=ciform)
 
 
 @app.route('/categories/<string:categoryname>/<string:itemname>')
 def showItem(categoryname, itemname):
-    item = session.query(Item).join(Category).filter(Category.name == categoryname, Item.name == itemname).first() # join() used to address the case when two different categories contain an item with the same name
+    # join() used to address the case when two different
+    # categories contain an item with the same name
+    item = session.query(Item).join(Category).filter(
+        Category.name == categoryname, Item.name == itemname).first()
     categories = session.query(Category).order_by(asc(Category.name)).all()
 
     ciform, diform = initializeItemForm(categories)
-    # Populate the fields of the edititem.html form with the respective values of the selected item
+    # Populate the fields of the edititem.html form with the
+    #  respective values of the selected item
     if 'username' in login_session:
         ciform.c_item_category.default = item.category_id
         ciform.process()
         ciform.c_item_csrf_token.data = login_session['state']
         ciform.c_item_name.data = item.name
         ciform.c_item_description.data = item.description
-    
-    return render_template('item.html', item=item, ciform=ciform, diform=diform)
+
+    return render_template('item.html', item=item,
+                           ciform=ciform, diform=diform)
 
 
 @app.route('/categories/new/', methods=['POST'])
 def newCategory():
-    # User needs to be logged in for CRUD operations. Redirect User to Login screen if he is not logged in
+    # User needs to be logged in for CRUD operations.
+    # Redirect User to Login screen if he is not logged in
     if 'username' not in login_session:
         return redirect('/login')
-    
+
     form = CreateCategoryForm(request.form)
 
-    if form.validate(): 
-        # Verify CSRF token 
+    if form.validate():
+        # Verify CSRF token
         if form.c_cat_csrf_token.data != login_session['state']:
             abort(403)
         else:
-            newCategory = Category(name=form.c_cat_name.data, user_id=login_session['user_id'])
+            newCategory = Category(
+                name=form.c_cat_name.data, user_id=login_session['user_id'])
             session.add(newCategory)
             session.commit()
-            categories = session.query(Category).order_by(asc(Category.name)).all()
+            categories = session.query(Category).order_by(
+                asc(Category.name)).all()
             ciform, diform = initializeItemForm(categories)
 
             # Render HTML that needs to be updated (via AJAX)
-            html = [render_template('categories.html', categories=categories, selectedCat=None), render_template('addItem.html', ciform=ciform)]
-            return jsonify(data={'message': '<p>New category <b>{}</b> successfully created!</p>'.format(escape(form.c_cat_name.data)),'status':1, 'html':html})
+            html = [render_template('categories.html',
+                                    categories=categories,
+                                    selectedCat=None),
+                    render_template('addItem.html', ciform=ciform)]
+            message = '<p>New category <b>{}</b> successfully created!</p>'
+            return jsonify(data={
+                'message': message.format(escape(form.c_cat_name.data)),
+                'status': 1,
+                'html': html
+            })
     return jsonify(data=form.errors)
+
 
 @app.route('/categories/delete/', methods=['POST'])
 def deleteCategory():
@@ -211,7 +270,8 @@ def deleteCategory():
             abort(403)
 
         category_id = dform.d_cat_id.data
-        categoryToDelete = session.query(Category).filter_by(id = category_id).one()
+        categoryToDelete = session.query(
+            Category).filter_by(id=category_id).one()
         if login_session['user_id'] != categoryToDelete.user_id:
             abort(403)
         else:
@@ -219,17 +279,30 @@ def deleteCategory():
             session.commit()
             active_category_id = dform.d_active_cat_id.data
             if category_id == active_category_id:
-                flash('<p>Category <b>{}</b> successfully deleted!</p>'.format(escape(categoryToDelete.name)))
+                message = '<p>Category <b>{}</b> successfully deleted!</p>'
+                flash(message.format(escape(categoryToDelete.name)))
                 return jsonify(data={'redirect': url_for("showCategories")})
             else:
-                categories = session.query(Category).order_by(asc(Category.name)).all()
+                categories = session.query(Category).order_by(
+                    asc(Category.name)).all()
                 if active_category_id:
-                    selectedCategory = session.query(Category).filter_by(id = active_category_id).one()
+                    selectedCategory = session.query(
+                        Category).filter_by(id=active_category_id).one()
                 else:
                     selectedCategory = None
                 ciform, diform = initializeItemForm(categories)
-                html = [render_template('categories.html', categories=categories, selectedCat=selectedCategory), render_template('addItem.html', ciform=ciform)]
-                return jsonify(data={'message': '<p>Category <b>{}</b> successfully deleted!</p>'.format(escape(categoryToDelete.name)),'status':1, 'html':html})
+                html = [render_template(
+                    'categories.html',
+                    categories=categories,
+                    selectedCat=selectedCategory),
+                    render_template('addItem.html', ciform=ciform)
+                ]
+                message = '<p>Category <b>{}</b> successfully deleted!</p>'
+                return jsonify(data={
+                    'message': message.format(escape(categoryToDelete.name)),
+                    'status': 1,
+                    'html': html
+                })
     return jsonify(data=dform.errors)
 
 
@@ -242,9 +315,10 @@ def updateCategory():
     if uform.validate():
         if uform.u_cat_csrf_token.data != login_session['state']:
             abort(403)
-            
+
         category_id = uform.u_cat_id.data
-        categoryToUpdate = session.query(Category).filter_by(id = category_id).one()
+        categoryToUpdate = session.query(
+            Category).filter_by(id=category_id).one()
         if login_session['user_id'] != categoryToUpdate.user_id:
             abort(403)
         else:
@@ -254,17 +328,34 @@ def updateCategory():
             active_category_id = uform.u_active_cat_id.data
 
             if category_id == active_category_id:
-                flash('<p>Category <b>{}</b> successfully edited!</p>'.format(escape(categoryToUpdate.name)))
-                return jsonify(data={'redirect': url_for("showItems", categoryname = categoryToUpdate.name)})
+                message = '<p>Category <b>{}</b> successfully edited!</p>'
+                flash(message.format(escape(categoryToUpdate.name)))
+                return jsonify(data={
+                    'redirect': url_for("showItems",
+                                        categoryname=categoryToUpdate.name)
+                })
             else:
-                categories = session.query(Category).order_by(asc(Category.name)).all()
+                categories = session.query(Category).order_by(
+                    asc(Category.name)).all()
                 if active_category_id:
-                    selectedCategory = session.query(Category).filter_by(id = active_category_id).one()
+                    selectedCategory = session.query(
+                        Category).filter_by(id=active_category_id).one()
                 else:
                     selectedCategory = None
                 ciform, diform = initializeItemForm(categories)
-                html = [render_template('categories.html', categories=categories, selectedCat=selectedCategory), render_template('addItem.html', ciform=ciform)]
-                return jsonify(data={'message': '<p>Category <b>{}</b> successfully edited!</p>'.format(escape(categoryToUpdate.name)),'status':1, 'html':html})
+                html = [
+                    render_template('categories.html',
+                                    categories=categories,
+                                    selectedCat=selectedCategory),
+                    render_template('addItem.html',
+                                    ciform=ciform)
+                ]
+                message = '<p>Category <b>{}</b> successfully edited!</p>'
+                return jsonify(data={
+                    'message': message.format(escape(categoryToUpdate.name)),
+                    'status': 1,
+                    'html': html
+                })
     return jsonify(data=uform.errors)
 
 
@@ -274,7 +365,9 @@ def newItem():
         return redirect('/login')
 
     form = ItemForm(request.form)
-    # As "Choices" have not been set in the form class (for dynamic Choices), we must add the Choices here so the form.validate() function below can check if we made a valid choice
+    # As "Choices" have not been set in the form class (for dynamic Choices),
+    # we must add the Choices here so the form.validate() function below can
+    # check if we made a valid choice
     form.c_item_category.choices = [("", "---")]
     categories = session.query(Category).order_by(asc(Category.name)).all()
     for category in categories:
@@ -287,22 +380,45 @@ def newItem():
             image = request.files['c_item_image']
             if image.filename == '':
                 print("no file selected")
-                newItem = Item(name=form.c_item_name.data, description=form.c_item_description.data, category_id=int(request.form['c_item_category']), user_id=login_session['user_id'])
+                newItem = Item(
+                    name=form.c_item_name.data,
+                    description=form.c_item_description.data,
+                    category_id=int(request.form['c_item_category']),
+                    user_id=login_session['user_id']
+                )
             elif image and allowed_file(image.filename):
                 originalFilename = secure_filename(image.filename)
                 extension = os.path.splitext(originalFilename)[1]
                 newfilename = unique_filename() + extension
-                image.save(os.path.join(app.config['UPLOAD_FOLDER'], newfilename))
-                newItem = Item(name=form.c_item_name.data, description=form.c_item_description.data, picture=newfilename, category_id=int(request.form['c_item_category']), user_id=login_session['user_id'])
+                image.save(os.path.join(
+                    app.config['UPLOAD_FOLDER'], newfilename))
+                newItem = Item(
+                    name=form.c_item_name.data,
+                    description=form.c_item_description.data,
+                    picture=newfilename,
+                    category_id=int(request.form['c_item_category']),
+                    user_id=login_session['user_id']
+                )
             else:
-                return jsonify(data={'message': 'File type not allowed! Please try again.','status':0})
+                message = 'File type not allowed! Please try again.'
+                return jsonify(data={'message': message, 'status': 0})
             session.add(newItem)
             session.commit()
             latest_items = latestItems()
             items = itemsOfCategory(int(request.form['c_item_category']))
-            html = [render_template('latestItems.html', latest_items=latest_items), render_template('items.html', items=items)]
-            return jsonify(data={'message': '<p>New Item <b>{}</b> successfully created!</p>'.format(escape(form.c_item_name.data)),'status':1, 'html':html})
+            html = [
+                render_template('latestItems.html',
+                                latest_items=latest_items),
+                render_template('items.html', items=items)
+            ]
+            message = '<p>New Item <b>{}</b> successfully created!</p>'
+            return jsonify(data={
+                'message': message.format(escape(form.c_item_name.data)),
+                'status': 1,
+                'html': html
+            })
     return jsonify(data=form.errors)
+
 
 @app.route('/<int:item_id>/edit/', methods=['POST'])
 def editItem(item_id):
@@ -310,7 +426,9 @@ def editItem(item_id):
         return redirect('/login')
 
     form = ItemForm(request.form)
-    # As "Choices" have not been set in the form class (for dynamic Choices), we must add the Choices here so the form.validate() function below can check if we made a valid choice
+    # As "Choices" have not been set in the form class (for dynamic Choices),
+    # we must add the Choices here so the form.validate() function below can
+    # check if we made a valid choice
     form.c_item_category.choices = [("", "---")]
     categories = session.query(Category).order_by(asc(Category.name)).all()
     for category in categories:
@@ -325,31 +443,42 @@ def editItem(item_id):
             abort(403)
         else:
             itemToEdit.name = form.c_item_name.data
-            itemToEdit.description= form.c_item_description.data
+            itemToEdit.description = form.c_item_description.data
             itemToEdit.category_id = int(request.form['c_item_category'])
             image = request.files['c_item_image']
-            
+
             if image.filename == '':
                 print("no file selected")
             elif image and allowed_file(image.filename):
                 if itemToEdit.picture:
                     # Remove previous image
                     oldfile = itemToEdit.picture
-                    os.remove(os.path.join(app.config['UPLOAD_FOLDER'], oldfile))
+                    os.remove(os.path.join(
+                        app.config['UPLOAD_FOLDER'], oldfile))
                 # Rename new image and save it
                 originalFilename = secure_filename(image.filename)
                 extension = os.path.splitext(originalFilename)[1]
                 newfilename = unique_filename() + extension
-                image.save(os.path.join(app.config['UPLOAD_FOLDER'], newfilename))
-                # Change filename in database with the newly generated filename of the new image
+                image.save(os.path.join(
+                    app.config['UPLOAD_FOLDER'], newfilename))
+                # Change filename in database with the newly generated
+                # filename of the new image
                 itemToEdit.picture = newfilename
             else:
-                return jsonify(data={'message': 'File type not allowed! Please try again.','status':0})
+                return jsonify(data={
+                    'message': 'File type not allowed! Please try again.',
+                    'status': 0
+                })
             session.add(itemToEdit)
             session.commit()
 
-            flash('<p>Item <b>{}</b> successfully edited!</p>'.format(escape(itemToEdit.name)))
-            return jsonify(data={'redirect': url_for("showItem", categoryname=itemToEdit.category.name, itemname=itemToEdit.name)})
+            message = '<p>Item <b>{}</b> successfully edited!</p>'
+            flash(message.format(escape(itemToEdit.name)))
+            return jsonify(data={
+                'redirect': url_for("showItem",
+                                    categoryname=itemToEdit.category.name,
+                                    itemname=itemToEdit.name)
+            })
     return jsonify(data=form.errors)
 
 
@@ -364,12 +493,13 @@ def deleteItem(item_id):
         if form.d_item_csrf_token.data != login_session['state']:
             abort(403)
 
-        itemToDelete = session.query(Item).filter_by(id = item_id).one()
+        itemToDelete = session.query(Item).filter_by(id=item_id).one()
         if login_session['user_id'] != itemToDelete.user_id:
             abort(403)
         else:
             session.delete(itemToDelete)
-            redirectURL = url_for("showItems", categoryname=itemToDelete.category.name)
+            redirectURL = url_for(
+                "showItems", categoryname=itemToDelete.category.name)
             session.commit()
 
             # Remove image
@@ -377,14 +507,14 @@ def deleteItem(item_id):
                 file = itemToDelete.picture
                 os.remove(os.path.join(app.config['UPLOAD_FOLDER'], file))
 
-            flash('<p>Item <b>{}</b> successfully deleted!</p>'.format(escape(itemToDelete.name)))
+            message = '<p>Item <b>{}</b> successfully deleted!</p>'
+            flash(message.format(escape(itemToDelete.name)))
             return jsonify(data={'redirect': redirectURL})
+
 
 @app.route('/images/<path:filename>')
 def uploadedFile(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
-
-
 
 
 # OAUTH Hybrid Flow Login
@@ -442,8 +572,9 @@ def gconnect():
     stored_access_token = login_session.get('access_token')
     stored_gplus_id = login_session.get('gplus_id')
     if stored_access_token is not None and gplus_id == stored_gplus_id:
-        response = make_response(json.dumps('Current user is already connected.'),
-                                 200)
+        response = make_response(
+            json.dumps('Current user is already connected.'),
+            200)
         response.headers['Content-Type'] = 'application/json'
         return response
 
@@ -476,7 +607,10 @@ def gconnect():
     output += '!</h1>'
     output += '<img src="'
     output += login_session['picture']
-    output += ' " style = "width: 300px; height: 300px;border-radius: 150px;-webkit-border-radius: 150px;-moz-border-radius: 150px;"> '
+    output += '''
+    " style = "width: 300px; height: 300px;border-radius: 150px;
+    -webkit-border-radius: 150px;-moz-border-radius: 150px;">
+    '''
     flash("You are now logged in as %s" % login_session['username'])
     print("done!")
     return output
@@ -506,7 +640,6 @@ def getUserID(email):
         return None
 
 
-
 @app.route('/fbconnect', methods=['POST'])
 def fbconnect():
     if request.args.get('state') != login_session['state']:
@@ -515,7 +648,6 @@ def fbconnect():
         return response
     access_token = request.data
     print("access token received %s " % access_token)
-
 
     app_id = json.loads(open('fb_client_secrets.json', 'r').read())[
         'web']['app_id']
@@ -526,14 +658,15 @@ def fbconnect():
     h = httplib2.Http()
     result = h.request(url, 'GET')[1]
 
-
     # Use token to get user info from API
     userinfo_url = "https://graph.facebook.com/v2.8/me"
     '''
-        Due to the formatting for the result from the server token exchange we have to
-        split the token first on commas and select the first index which gives us the key : value
-        for the server access token then we split it on colons to pull out the actual token value
-        and replace the remaining quotes with nothing so that it can be used directly in the graph
+        Due to the formatting for the result from the server token
+        exchange we have to split the token first on commas and
+        select the first index which gives us the key : value for
+        the server access token then we split it on colons to pull
+        out the actual token value and replace the remaining quotes
+        with nothing so that it can be used directly in the graph
         api calls
     '''
     token = result.split(',')[0].split(':')[1].replace('"', '')
@@ -573,12 +706,13 @@ def fbconnect():
     output += '!</h1>'
     output += '<img src="'
     output += login_session['picture']
-    output += ' " style = "width: 300px; height: 300px;border-radius: 150px;-webkit-border-radius: 150px;-moz-border-radius: 150px;"> '
+    output += '''
+    " style = "width: 300px; height: 300px;border-radius: 150px;
+    -webkit-border-radius: 150px;-moz-border-radius: 150px;">
+    '''
 
     flash("You are now logged in as %s" % login_session['username'])
     return output
-
-
 
 
 @app.route('/fbdisconnect')
@@ -586,11 +720,11 @@ def fbdisconnect():
     facebook_id = login_session['facebook_id']
     # The access token must me included to successfully logout
     access_token = login_session['access_token']
-    url = 'https://graph.facebook.com/%s/permissions?access_token=%s' % (facebook_id,access_token)
+    url = 'https://graph.facebook.com/%s/permissions?access_token=%s' % (
+        facebook_id, access_token)
     h = httplib2.Http()
     result = h.request(url, 'DELETE')[1]
     return "you have been logged out"
-
 
 
 @app.route('/gdisconnect')
@@ -610,10 +744,10 @@ def gdisconnect():
         response.headers['Content-Type'] = 'application/json'
         return response
     else:
-        response = make_response(json.dumps('Failed to revoke token for given user.', 400))
+        response = make_response(json.dumps(
+            'Failed to revoke token for given user.', 400))
         response.headers['Content-Type'] = 'application/json'
         return response
-
 
 
 # Disconnect based on provider
@@ -644,4 +778,3 @@ if __name__ == '__main__':
     app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
     app.debug = True
     app.run(host='0.0.0.0', port=5000)
-
